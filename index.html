@@ -1,809 +1,585 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latihan Soal + Timer + Progress</title>
-    <style>
-        * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drill Matematika</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-soft: #eef2ff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    width: min(900px, 92%);
+    margin-inline: auto;
+    padding: 32px 0 48px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-            background-color: #f3f4f6;
-        }
+  /* ===== MENU ===== */
+  #menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeIn .3s ease;
+  }
+  #menu.hidden { display: none; }
 
-        .card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            padding: 24px;
-            width: min(720px, 90%);
-            border-radius: 12px;
-            margin: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
+  .judul { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .judul span { color: var(--primary); }
+  .subjudul { color: var(--text-muted); font-size: .95rem; margin-bottom: 16px; }
 
-        .sub-menu {
-            border: 1px solid #e5e7eb;
-            padding: 14px 16px;
-            margin: 10px 0;
+  .level {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all .2s ease;
+  }
+  .level::after {
+    content: '→';
+    color: var(--text-muted);
+    transition: transform .2s ease, color .2s ease;
+  }
+  .level:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79,70,229,.12);
+  }
+  .level:hover::after { transform: translateX(4px); color: var(--primary); }
+  .level:active { transform: translateY(0); }
+
+  /* ===== QUIZ ===== */
+  #content {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    animation: fadeIn .3s ease;
+  }
+  #content.active { display: block; }
+
+  #progress {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--text-muted);
+  }
+  #timer, #skor, #progresSoal {
+    background: var(--bg);
+    padding: 8px 14px;
+    border-radius: 10px;
+  }
+  #timer.urgent { color: var(--danger); background: #fef2f2; }
+
+  #teksoal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 32px 0;
+    min-height: 90px;
+  }
+  .tengrid{
+    display: grid;
+    grid-template-columns: repeat(5,40px);
+    grid-template-rows: repeat(2,40px);
+    gap:4px;
+  }
+  .tenframe{
+    width: 40px;
+    height: 40px;
+    border: 1px solid green;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .item{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: red;
+  }
+
+  .jawaban {
+    min-width: 80px;
+    min-height: 60px;
+    border: 2px solid var(--primary);
+    border-radius: 14px;
+    background: var(--primary-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    padding: 0 16px;
+    transition: all .15s ease;
+  }
+  .jawaban.benar { border-color: var(--success); background: #ecfdf5; color: var(--success); }
+  .jawaban.salah { border-color: var(--danger); background: #fef2f2; color: var(--danger); animation: shake .3s; }
+
+  /* ===== NUMPAD ===== */
+  #numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: min(400px, 100%);
+    margin-inline: auto;
+  }
+  #numpad button {
+    padding: 18px 0;
+    font-family: inherit;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all .15s ease;
+    min-height: 56px;
+  }
+  #numpad button:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+  #numpad button:active { transform: translateY(0) scale(.97); }
+  #numpad button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  #hapus { grid-column: 2/4; color: var(--danger); }
+  #hapus:hover { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
+  #enter {
+    grid-column: 1/4;
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    font-weight: 700;
+  }
+  #enter:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(79,70,229,.3);
+  }
+
+  /* ===== SELESAI ===== */
+  #selesai {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 24px;
+    animation: fadeIn .3s ease;
+  }
+  #selesai.active { display: flex; }
+  #skorAkhir { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+  #selesai p { color: var(--text-muted); margin-bottom: 24px; }
+  #selesai button {
+    padding: 14px 32px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  #selesai button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79,70,229,.3);
+  }
+  /* Styling sederhana untuk dialog */
+        dialog {
+            padding: 20px;
             border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
-        }
-        .sub-menu:hover { background-color: #eff6ff; border-color: #93c5fd; }
-        .sub-menu:active { transform: scale(0.99); }
-
-        .title { font-weight: bold; margin-bottom: 4px; }
-        .deskripsi { font-size: 14px; margin: 0; color: #6b7280; }
-
-        /* ===== Progress ===== */
-        .progress-wrap {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-        .progress-bar {
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 99px;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #2563eb, #7c3aed);
-            border-radius: 99px;
-            transition: width 0.4s ease;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-inline: auto;
+            margin-top:20px;
         }
 
-        /* Dots per soal */
-        .progress-dots {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            transition: background 0.3s, transform 0.2s;
-        }
-        .dot.current { transform: scale(1.4); box-shadow: 0 0 0 2px #93c5fd; }
-        .dot.benar   { background: #16a34a; }
-        .dot.salah   { background: #dc2626; }
-        .dot.aktif   { background: #2563eb; } /* sedang dikerjakan */
-
-        /* ===== Timer ===== */
-        .timer-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .timer-bar {
-            flex: 1;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 99px;
-            overflow: hidden;
-        }
-        .timer-fill {
-            height: 100%;
-            width: 100%;
-            background: #16a34a;
-            border-radius: 99px;
-            transition: width 0.25s linear, background-color 0.3s;
-        }
-        .timer-fill.warning { background: #f59e0b; }
-        .timer-fill.danger  { background: #dc2626; }
-
-        .timer-text {
-            font-variant-numeric: tabular-nums;
-            font-weight: 700;
-            font-size: 0.95rem;
-            min-width: 3.2em;
-            text-align: right;
-            color: #374151;
-        }
-        .timer-text.danger { color: #dc2626; }
-
-        /* ===== Button ===== */
-        .jawab > div {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        button {
-            padding: 10px 18px;
-            font-size: 1rem;
-            font-family: inherit;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-        }
-
-        #cek {
-            background-color: #2563eb; color: #fff;
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
-        }
-        #cek:hover { background-color: #1d4ed8; }
-        #cek:active { transform: scale(0.97); }
-        #cek:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
-
-        #next { background-color: #16a34a; color: #fff; }
-        #next:hover { background-color: #15803d; }
-        #next:active { transform: scale(0.97); }
-        #next:focus-visible { outline: 3px solid #86efac; outline-offset: 2px; }
-
-        .backToMenu { background-color: #e5e7eb; color: #111827; }
-        .backToMenu:hover { background-color: #d1d5db; }
-        .backToMenu:active { transform: scale(0.97); }
-        .backToMenu:focus-visible { outline: 3px solid #cbd5e1; outline-offset: 2px; }
-
-        .jawab button:disabled {
-            background-color: #9ca3af; color: #fff;
-            cursor: not-allowed; box-shadow: none;
-        }
-
-        /* ===== Input ===== */
-        #jawaban {
-            padding: 6px 10px;
-            font-size: 1.4rem;
-            width: 5rem;
-            text-align: center;
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        #jawaban:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        /* ===== Soal ===== */
-        .soal {
-            font-size: 2rem;
-            text-align: center;
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .tengrid {
-            display: grid;
-            grid-template-columns: repeat(5, 50px);
-            grid-template-rows: repeat(2, 50px);
-            gap: 4px;
-        }
-        .blue { border-radius: 50px; background-color: #2563eb; }
-        .red  { border-radius: 50px; background-color: #f59e0b; opacity: 0.2; }
-        .bantuan{
-            display: grid;
-            grid-template-columns: repeat(5, 50px);
-            grid-template-rows: repeat(2, 50px);
-            gap: 4px;
-        }
-
-        .blue1{
-            border-radius: 50px;border-radius: 50px; background-color: #2563eb;cursor: pointer;user-select: none;
-            display: flex; justify-content: center; align-items: center; color: #fff; font-weight: 600;
-        }
-        .blue1.transparan{
-            border-radius: 50px;border-radius: 50px; background-color: #2563eb;
-            display: flex; justify-content: center; align-items: center; color: #fff; font-weight: 600;
-            opacity: 0.2;
-        }
-        .red1{
-            border-radius: 50px;border-radius: 50px; background-color: #d6d4d0;
-            display: flex; justify-content: center; align-items: center; color: #fff; font-weight: 600;
-        }
-        .pilihan-jawab {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 8px;
-            max-width: 340px;
-        }
-        .pilihan-jawab button {
-            width: 44px;
-            height: 44px;
-            font-size: 1rem;
-            font-weight: 600;
-            border: 2px solid #d1d5db;
-            border-radius: 10px;
-            background: #f9fafb;
-            cursor: pointer;
-            transition: background 0.2s, border-color 0.2s, transform 0.1s;
-        }
-        .pilihan-jawab button:hover { background: #e0e7ff; border-color: #2563eb; }
-        .pilihan-jawab button:active { transform: scale(0.95); }
-        .pilihan-jawab button.correct {
-            background: #16a34a; border-color: #16a34a; color: #fff;
-        }
-        .pilihan-jawab button.wrong {
-            background: #dc2626; border-color: #dc2626; color: #fff;
-        }
-
-        /* ===== Selesai ===== */
-        #selesai {
-            text-align: center;
-            font-size: 1.2rem;
-        }
-        #selesai h2 { margin: 0 0 12px; }
-        .score-box {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            margin: 16px 0;
-            font-size: 1rem;
-        }
-        .score-item { text-align: center; }
-        .score-item .num {
-            font-size: 2rem;
-            font-weight: 700;
-            display: block;
-        }
-        .score-item.benar .num { color: #16a34a; }
-        .score-item.salah .num { color: #dc2626; }
-
-        .feedback {
-            margin-top: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            min-height: 1.4em;
-        }
-        .feedback.benar { color: #16a34a; }
-        .feedback.salah { color: #dc2626; }
-    </style>
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+</style>
 </head>
-
 <body>
-    <div id="mulai" class="card">
-        <div class="sub-menu" data-level="1">
-            <div class="title">Level 1</div>
-            <div class="deskripsi">Hitung jumlah kotak biru</div>
+
+  <!-- MENU -->
+  <div id="menu">
+    <h1 class="judul">Drill <span>Matematika</span></h1>
+    <div class="subjudul">Pilih Mode <button type="button" onclick="bukaDialog()">⚙️</button></div>
+    
+
+    <dialog id="myDialog">
+        <h3>Pilih Tipe</h3>
+        
+        <!-- Radio button tanpa tag <form>, dikelompokkan lewat name="level" -->
+        <div>
+            <input type="radio" id="mudah" name="level" value="Mudah" checked>
+            <label for="mudah">Mudah</label>
         </div>
-        <div class="sub-menu" data-level="2">
-            <div class="title">Level 2</div>
-            <div class="deskripsi">Isi angka yang kosong (jumlah = 10)</div>
+        <div>
+            <input type="radio" id="sedang" name="level" value="Sedang">
+            <label for="sedang">Sedang</label>
+        </div>  
+        <h3>Setting Duras</h3>
+        <div>
+            <input type="number" id="durasiset" value="15">
         </div>
-        <div class="sub-menu" data-level="3">
-            <div class="title">Level 3</div>
-            <div class="deskripsi">Penjumlahan dasar</div>
-        </div>
-        <div class="sub-menu" data-level="4">
-            <div class="title">Level 4</div>
-            <div class="deskripsi">Penjumlahan dasar</div>
-        </div>
-        <div class="sub-menu" data-level="5">
-            <div class="title">Level 5</div>
-            <div class="deskripsi">Penjumlahan dengan 9</div>
-        </div>
-        <div class="sub-menu" data-level="6">
-            <div class="title">Level 6</div>
-            <div class="deskripsi">Penjumlahan dengan 8</div>
-        </div>
-        <div class="sub-menu" data-level="7">
-            <div class="title">Level 7</div>
-            <div class="deskripsi">Penjumlahan dengan 7</div>
-        </div>
-        <div class="sub-menu" data-level="8">
-            <div class="title">Level 8</div>
-            <div class="deskripsi">Penjumlahan dengan 6</div>
-        </div>
-        <div class="sub-menu" data-level="9">
-            <div class="title">Level 9</div>
-            <div class="deskripsi">Pengurangan dengan 5-7</div>
-        </div>
-        <div class="sub-menu" data-level="10">
-            <div class="title">Level 10</div>
-            <div class="deskripsi">Pengurangan dengan 8-9</div>
-        </div>
-        <div class="sub-menu" data-level="11">
-            <div class="title">Level 11</div>
-            <div class="deskripsi">Pengurangan dengan 10</div>
-        </div>
+
+        <br>
+        <!-- Tombol Aksi di dalam Dialog -->
+        <button type="button" onclick="simpanPilihan()">Simpan</button>
+        <button type="button" onclick="tutupDialog()">Batal</button>
+    </dialog>
+
+    <div id="levelpre1" class="level">Pre level · Hitung Ten Frame</div>
+    <div id="levelpre2" class="level">Pre level · Hitung Ten Frame</div>
+    <div id="level1" class="level">Level 1 · Penjumlahan dasar</div>
+    <div id="level2" class="level">Level 2 · Penjumlahan</div>
+    <div id="level3" class="level">Level 3 · Penjumlahan lanjut</div>
+    <div id="level4" class="level">Level 4 · Pengurangan dasar</div>
+    <div id="level5" class="level">Level 5 · Pengurangan</div>
+    <div id="level6" class="level">Level 6 · Pengurangan</div>
+    <div id="level7" class="level">Level 7 · Pengurangan</div>
+    <div id="level8" class="level">Level 8 · Pengurangan</div>
+    <div id="level9" class="level">Level 9 · Pengurangan</div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="content">
+    <div id="progress">
+      <div id="timer">⏱️ 5</div>
+      <div id="skor">Skor: 0</div>
+      <div id="progresSoal">0/0</div>
     </div>
-
-    <div id="berjalan" class="card">
-        <!-- Progress text + bar -->
-        <div class="progress-wrap">
-            <span id="progressText">Soal 1 / 9</span>
-            <span id="scoreText">✓ 0 &nbsp; ✗ 0</span>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="progress-dots" id="progressDots"></div>
-
-        <!-- Timer -->
-        <div class="timer-wrap">
-            <div class="timer-bar">
-                <div class="timer-fill" id="timerFill"></div>
-            </div>
-            <div class="timer-text" id="timerText">15s</div>
-        </div>
-        <div class="visualisasi"></div>
-        <div class="soal"></div>
-        <div class="feedback" id="feedback"></div>
-        <div class="jawab">
-            <div>
-                <button id="cek">Cek</button>
-                <button id="next">>></button>
-            </div>
-            <div>
-                <button class="backToMenu">Kembali ke Menu</button>
-            </div>
-        </div>
+    <div id="teksoal"></div>
+    <div id="numpad">
+      <button data-btn="7">7</button>
+      <button data-btn="8">8</button>
+      <button data-btn="9">9</button>
+      <button data-btn="4">4</button>
+      <button data-btn="5">5</button>
+      <button data-btn="6">6</button>
+      <button data-btn="1">1</button>
+      <button data-btn="2">2</button>
+      <button data-btn="3">3</button>
+      <button data-btn="0">0</button>
+      <button id="hapus" data-btn="hapus">⌫ Hapus</button>
+      <button id="enter" data-btn="cek">Enter ⏎</button>
     </div>
+  </div>
 
-    <div id="selesai" class="card">
-        <h2>Selesai! 🎉</h2>
-        <div class="score-box">
-            <div class="score-item benar">
-                <span class="num" id="totalBenar">0</span>
-                Benar
-            </div>
-            <div class="score-item salah">
-                <span class="num" id="totalSalah">0</span>
-                Salah
-            </div>
-            <div>
-                <button class="backToMenu">Kembali ke Menu</button>
-            </div>
-        </div>
-    </div>
+  <!-- SELESAI -->
+  <div id="selesai">
+    <div id="skorAkhir"></div>
+    <p>Kerja bagus! Mau coba level lain?</p>
+    <button id="btnMenu">Kembali ke Menu</button>
+  </div>
 
-    <script>
-        (function () {
-            'use strict';
+<script>
+  // ===== DATA SOAL (LENGKAP) =====
+  const datasoal = {
+    levelpre1:{jenis:'pre', soal:[2,3,4,5,6,7,3]},
+    level1: { jenis: 'tambah', soal: [[2,1],[2,2],[3,1],[3,2],[4,1],[3,3],[4,2],[5,1],[4,3],[5,2],[6,1],[4,4],[5,3],[6,2],[7,1],[5,4],[6,3],[7,2],[8,1],[5,5],[6,4],[7,3],[8,2],[9,1],[10,1]] },
+    level2: { jenis: 'tambah', soal: [[6,5],[7,4],[8,3],[9,2],[6,6],[7,5],[8,4],[9,3],[10,2],[7,6],[8,5],[9,4],[10,3],[7,7],[8,6],[9,5],[10,4],[8,7],[9,6],[10,5],[5,4],[6,3],[4,3],[7,3],[8,2]] },
+    level3: { jenis: 'tambah', soal: [[8,8],[9,7],[10,6],[9,8],[10,7],[9,9],[10,8],[10,9],[6,5],[7,4],[8,3],[9,2],[6,6],[7,5],[8,4],[9,3],[7,6],[8,5],[9,4],[7,7],[8,6],[9,5],[8,7],[9,6],[10,5]] },
+    level4: { jenis: 'kurang', soal: [[10,1],[10,2],[10,8],[10,9],[9,1],[9,2],[9,7],[9,8],[8,1],[8,2],[8,6],[8,7],[7,1],[7,2],[7,5],[7,6],[6,1],[6,2],[6,4],[6,5],[5,1],[5,2],[5,3],[5,4],[3,2]] },
+    level5: { jenis: 'kurang', soal: [[10,3],[10,4],[10,5],[10,6],[10,7],[9,3],[9,4],[9,5],[9,6],[8,3],[8,4],[8,5],[7,3],[7,4],[6,3],[9,7],[9,8],[8,6],[8,7],[7,5],[7,6],[6,4],[6,5],[10,8],[10,2]] },
+    level6: { jenis: 'kurang', soal: [[20,10],[19,10],[19,9],[19,6],[18,10],[18,8],[18,7],[18,6],[18,2],[18,1],[17,10],[17,7],[17,6],[17,5],[17,4],[16,10],[16,6],[16,5],[15,10],[15,5],[15,1],[13,10],[13,3],[12,10],[12,2]] },
+    level7: { jenis: 'kurang', soal: [[18,9],[16,7],[15,6],[14,6],[14,5],[13,5],[13,4],[12,5],[12,4],[12,3],[11,9],[11,5],[11,4],[11,3],[11,2]] },
+    level8: { jenis: 'kurang', soal: [[17,9],[17,8],[15,9],[14,9],[14,8],[13,9],[13,7],[13,6],[12,9],[12,8],[12,7],[12,6],[11,8],[11,7],[11,6]] },
+    level9: { jenis: 'kurang', soal: [[20,9],[20,8],[20,7],[20,6],[20,5],[20,4],[20,3],[20,2],[20,1],[16,9],[16,8],[15,8],[15,7],[14,7],[13,8]] }
+  };
 
-            // ===== KONFIGURASI =====
-            const DURASI_SOAL = 15;
+  // ===== ELEMEN =====
+  const menuEl    = document.getElementById("menu");
+  const contentEl = document.getElementById("content");
+  const numpadEl  = document.getElementById("numpad");
+  const teksoalEl = document.getElementById("teksoal");
+  const skorEl    = document.getElementById("skor");
+  const timerEl   = document.getElementById("timer");
+  const progresEl = document.getElementById("progresSoal");
+  const selesaiEl = document.getElementById("selesai");
+  const skorAkhirEl = document.getElementById("skorAkhir");
 
-            // ===== ELEMEN =====
-            const mulai = document.getElementById('mulai');
-            const berjalan = document.getElementById('berjalan');
-            const selesai = document.getElementById('selesai');
-            const soalEl = document.querySelector('.soal');
-            const feedbackEl = document.getElementById('feedback');
-            const cekButton = document.getElementById('cek');
-            const nextButton = document.getElementById('next');
-            const backToMenuButton = document.querySelectorAll('.backToMenu');
-            const timerFill = document.getElementById('timerFill');
-            const timerText = document.getElementById('timerText');
-            const progressText = document.getElementById('progressText');
-            const progressFill = document.getElementById('progressFill');
-            const progressDots = document.getElementById('progressDots');
-            const scoreText = document.getElementById('scoreText');
-            const totalBenarEl = document.getElementById('totalBenar');
-            const totalSalahEl = document.getElementById('totalSalah');
-        const visualisasiEl = document.querySelector('.visualisasi');
+  const state = {
+    index: 0, jenis: 'tambah', soal: [], jawaban: 0, mode:0,
+    benar: 0, salah: 0, durasi: 15, interval: null, terkunci: false
+  };
 
-            // ===== STATE =====
-            const state = {
-                index: 0,
-                level: 1,
-                tipeSoal: 1,
-                soal: [],
-                jawabanBenar: null,
-                screen: 'mulai',
+  // ===== EVENT =====
+  menuEl.addEventListener("click", mulai);
+  numpadEl.addEventListener("click", cekbtn);
+  document.getElementById("btnMenu").addEventListener("click", kembaliKeMenu);
 
-                // timer
-                timeLeft: DURASI_SOAL,
-                timerId: null,
-                soalLocked: false,
+  // ===== LOGIKA =====
+  function mulai(e) {
+    const kartu = e.target.closest(".level");
+    if (!kartu) return;
 
-                // progress & skor
-                hasil: [],         // array status per soal: 'benar' | 'salah' | null
-                totalBenar: 0,
-                totalSalah: 0,
-            };
+    const id = kartu.id;
+    if (!datasoal[id]) return;
 
-            const DataSoal = {
-                1: { tipeSoal: 1, soal: [[1,9], [2,8], [3,7], [4,6], [5,5], [6,4], [7,3], [8,2], [9,1], [5,5], [6,4], [7,3], [8,2], [9,1]] },
-                2: { tipeSoal: 2, soal: [[1,9], [2,8], [3,7], [4,6], [5,5], [6,4], [7,3], [8,2], [6,4], [7,3], [8,2], [9,1]] },
-                3: { tipeSoal: 3, soal: [[1,1], [2,2], [3,3], [4,4], [5,5], [6,6], [7,7], [8,8], [9,9]] },
-                4: { tipeSoal: 3, soal: [[1,2], [2,3], [3,4], [4,5], [5,6], [6,7], [7,8], [8,9], [9,10]] },
-                5: { tipeSoal: 3, soal: [[9,2], [9,3], [9,4], [9,5], [9,6], [9,7], [9,8], [9,9]] },
-                6: { tipeSoal: 3, soal: [[8,2], [8,3], [8,4], [8,5], [8,6], [8,7], [8,8], [8,9]] },
-                7: { tipeSoal: 3, soal: [[7,3], [7,4], [7,5], [7,6], [7,7], [7,8], [7,9]] },
-                8: { tipeSoal: 3, soal: [[6,4], [6,5], [6,6], [6,7], [6,8], [6,9]] },
-                9:{ tipeSoal: 4, soal: [[5, 1],[5, 2],[5, 3],[5, 4],[6, 1],[6, 2],[6, 3],[6, 4],[6, 5],[7, 1],[7, 2],[7, 3],[7, 4],[7, 5],[7, 6]]},
-                10:{tipeSoal:4, soal:[[8, 1],[8, 2],[8, 3],[8, 4],[8, 5],[8, 6],[8, 7],[9, 1],[9, 2],[9, 3],[9, 4],[9, 5],[9, 6],[9, 7],[9, 8]]},
-                11:{tipeSoal:4, soal:[[10, 1],[10, 2],[10, 3],[10, 4],[10, 5],[10, 6],[10, 7],[10, 8],[10, 9]]}
-            };
+    state.jenis  = datasoal[id].jenis;
+    state.benar  = 0;
+    state.salah  = 0;
+    state.index  = 0;
+    state.soal   = fisherYatesShuffle(datasoal[id].soal); // salin array
+    
 
-            // ===== URL ↔ STATE =====
-            function syncStateFromURL() {
-                const params = new URLSearchParams(window.location.search);
-                state.index = parseInt(params.get('index')) || 0;
-                state.level = parseInt(params.get('level')) || 1;
-                state.tipeSoal = parseInt(params.get('tipeSoal')) || 1;
-                state.screen = params.get('screen') || 'mulai';
+    skorEl.textContent = "Skor: 0";
+
+    menuEl.classList.add("hidden");
+    selesaiEl.classList.remove("active");
+    contentEl.classList.add("active");
+
+    displayTeks();
+  }
+
+  function kembaliKeMenu() {
+    hentikanTimer();
+    contentEl.classList.remove("active");
+    selesaiEl.classList.remove("active");
+    menuEl.classList.remove("hidden");
+  }
+
+  function displayTeks() {
+    if (state.index >= state.soal.length) { selesaiQuiz(); return; }
+
+    state.terkunci = false;
+    progresEl.textContent = `${state.index + 1}/${state.soal.length}`;
+    teksoalEl.innerHTML = "";
+
+    const numerik = state.soal[state.index];
+    let a = numerik[0], b = numerik[1];
+
+    if (state.jenis === 'tambah') {
+        console.log('masuk ketambah', state)
+        if(state.mode==1){
+            modeA(numerik)
+        }else{
+            modeB(numerik)
+        }
+      
+    } else if(state.jenis ==='kurang') {
+      if(state.mode==1){
+            modeC(numerik)
+        }else{
+            modeD(numerik)
+        }
+    } else{
+        teksoalEl.innerHTML=`${memmbuatTenFrame(numerik)} = <div class="jawaban"></div>`
+        //<span class="jawaban"></span>`
+        state.jawaban=numerik
+    }
+
+    mulaiTimer();
+  }
+
+  function mulaiTimer() {
+    hentikanTimer();
+    let durasi = state.durasi;
+    timerEl.textContent = `⏱️ ${durasi}`;
+    timerEl.classList.remove("urgent");
+
+    state.interval = setInterval(() => {
+      durasi--;
+      timerEl.textContent = `⏱️ ${durasi}`;
+      if (durasi <= 2) timerEl.classList.add("urgent");
+      if (durasi <= 0) {
+        hentikanTimer();
+        const el = document.querySelector(".jawaban").textContent;
+        if (el.length>0){
+            cekjawaban()
+        }else{
+            state.salah++;
+            state.terkunci = true;
+            tampilkanFeedback(false);
+        }
+      }
+    }, 1000);
+  }
+
+  function hentikanTimer() {
+    if (state.interval !== null) {
+      clearInterval(state.interval);
+      state.interval = null;
+    }
+  }
+
+  function cekbtn(e) {
+    const btn = e.target.closest("button");
+    if (!btn || state.terkunci) return;
+    const aksi = btn.dataset.btn;
+    if (aksi === "cek") cekjawaban();
+    else if (aksi === "hapus") hapusteks();
+    else buatteks(aksi);
+  }
+
+  function buatteks(x) {
+    const el = document.querySelector(".jawaban");
+    if (!el || el.textContent.length >= 2) return;
+    el.textContent += x;
+  }
+
+  function hapusteks() {
+    const el = document.querySelector(".jawaban");
+    if (el) el.textContent = el.textContent.slice(0, -1);
+  }
+
+  function cekjawaban() {
+    const el = document.querySelector(".jawaban");
+    const val = parseInt(el.textContent, 10);
+    if (isNaN(val)) return;
+
+    hentikanTimer();
+    state.terkunci = true;
+    const benar = val === state.jawaban;
+    if (benar) state.benar++; else state.salah++;
+    skorEl.textContent = `Skor: ${state.benar}`;
+    tampilkanFeedback(benar);
+  }
+
+  function tampilkanFeedback(benar) {
+    const el = document.querySelector(".jawaban");
+    if (!el) return;
+    el.classList.add(benar ? "benar" : "salah");
+    if (!benar) el.textContent = state.jawaban;
+    setTimeout(() => {
+      state.index++;
+      displayTeks();
+    }, 800);
+  }
+
+  function selesaiQuiz() {
+    hentikanTimer();
+    contentEl.classList.remove("active");
+    selesaiEl.classList.add("active");
+    skorAkhirEl.innerHTML = `✔️ Benar: <strong>${state.benar}</strong> &nbsp;·&nbsp; ❌ Salah: <strong>${state.salah}</strong>`;
+  }
+
+  function memmbuatTenFrame(x){
+    let temp=''
+    for(let i=1; i<11;i++){
+        if(i<=x){
+            temp +=`<div class="tenframe"><div class="item"></div></div>`
+        }else{
+             temp +=`<div class="tenframe"></div>`
+        }
+    }
+    return `<div class="tengrid">${temp}</div>`
+  }
+
+  function modeA(arr){    
+    const angkaRandom = Math.floor(Math.random() * 2) + 1;   
+      const acak = fisherYatesShuffle(arr);
+      if(angkaRandom===1){
+        teksoalEl.innerHTML = `<span class="jawaban"></span> + ${acak[1]}  =${acak[0]+acak[1]}`;
+        state.jawaban=acak[0]
+      }else{
+        teksoalEl.innerHTML = `${acak[0]} +  <span class="jawaban"></span> =${acak[0]+acak[1]}`;
+          state.jawaban=acak[1]
+      }  
+  }
+  function modeB(arr){    
+    const acak = fisherYatesShuffle(arr);
+    teksoalEl.innerHTML = `${acak[0]} + ${acak[1]} = <span class="jawaban"></span>`;
+    state.jawaban = acak[0] + acak[1];      
+  }
+  function modeC(arr){    
+    if (arr[0] < arr[1]) [arr[0], arr[1]] = [arr[1], arr[0]];
+    const angkaRandom = Math.floor(Math.random() * 2) + 1; 
+    if(angkaRandom===1){
+        teksoalEl.innerHTML = `<span class="jawaban"></span> − ${arr[1]} = ${arr[0] - arr[1]};`
+        state.jawaban = arr[0]; 
+    }
+      teksoalEl.innerHTML = `${arr[0]} - <span class="jawaban"></span> = ${arr[0] - arr[1]};`
+        state.jawaban = arr[1];  
+  }
+  function modeD(arr){    
+    if (arr[0] < arr[1]) [arr[0], arr[1]] = [arr[1], arr[0]];
+      teksoalEl.innerHTML = `${arr[0]} − ${arr[1]} = <span class="jawaban"></span>;`
+      state.jawaban = arr[0] - arr[1]; 
+  }
+
+  function fisherYatesShuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const dialog = document.getElementById('myDialog');
+
+        // Fungsi untuk membuka dialog
+        function bukaDialog() {
+            dialog.showModal(); // Membuka dialog dalam mode modal (latar belakang redup)
+        }
+
+        // Fungsi untuk menutup dialog tanpa menyimpan
+        function tutupDialog() {
+            dialog.close();
+        }
+
+        // Fungsi saat tombol Simpan ditekan
+        function simpanPilihan() {
+            // Mengambil nilai radio button yang dipilih
+            const selected = document.querySelector('input[name="level"]:checked');
+            
+            if (selected.value ==="Sedang") {
+                
+                state.mode=1
+                 // Tutup dialog setelah dipilih
+            } else {
+                state.mode=0
             }
 
-            function syncURLFromState({ replace = true } = {}) {
-                const params = new URLSearchParams();
-                if (state.level !== 0) params.set('level', state.level);
-                if (state.index !== 0) params.set('index', state.index);
-                if (state.tipeSoal !== 1) params.set('tipeSoal', state.tipeSoal);
-                if (state.screen !== 'mulai') params.set('screen', state.screen);
-
-                const newUrl = location.pathname + (params.toString() ? '?' + params : '');
-                if (replace) history.replaceState({ ...state }, '', newUrl);
-                else history.pushState({ ...state }, '', newUrl);
-            }
-
-            function setState(patch, opts = {}) {
-                Object.assign(state, patch);
-                syncURLFromState(opts);
-                render();
-            }
-
-            // ===== PROGRESS =====
-            function renderProgress() {
-                const total = state.soal.length;
-                const pos = state.index + 1;
-
-                progressText.textContent = `Soal ${pos} / ${total}`;
-                scoreText.textContent = `✓ ${state.totalBenar}  ✗ ${state.totalSalah}`;
-
-                const percent = total > 0 ? (state.index / total) * 100 : 0;
-                progressFill.style.width = percent + '%';
-
-                // Dots
-                progressDots.innerHTML = '';
-                for (let i = 0; i < total; i++) {
-                    const dot = document.createElement('span');
-                    dot.className = 'dot';
-
-                    const status = state.hasil[i];
-                    if (status === 'benar') dot.classList.add('benar');
-                    else if (status === 'salah') dot.classList.add('salah');
-
-                    if (i === state.index) dot.classList.add('current');
-                    if (i > state.index) dot.classList.add('aktif'); // belum dikerjakan
-
-                    progressDots.appendChild(dot);
-                }
-            }
-
-            function catatHasil(status) {
-                // status: 'benar' | 'salah'
-                if (state.hasil[state.index]) return; // sudah pernah dicatat
-                state.hasil[state.index] = status;
-
-                if (status === 'benar') state.totalBenar++;
-                else state.totalSalah++;
-
-                renderProgress();
-            }
-
-            // ===== TIMER =====
-            function stopTimer() {
-                if (state.timerId !== null) {
-                    clearInterval(state.timerId);
-                    state.timerId = null;
-                }
-            }
-
-            function updateTimerUI() {
-                const ratio = state.timeLeft / DURASI_SOAL;
-                const percent = Math.max(0, ratio * 100);
-                timerFill.style.width = percent + '%';
-
-                timerFill.classList.toggle('warning', ratio <= 0.5 && ratio > 0.2);
-                timerFill.classList.toggle('danger', ratio <= 0.2);
-
-                timerText.textContent = state.timeLeft + 's';
-                timerText.classList.toggle('danger', ratio <= 0.2);
-            }
-
-            function startTimer() {
-                stopTimer();
-                state.timeLeft = DURASI_SOAL;
-                state.soalLocked = false;
-                updateTimerUI();
-
-                state.timerId = setInterval(() => {
-                    state.timeLeft -= 1;
-
-                    if (state.timeLeft <= 0) {
-                        state.timeLeft = 0;
-                        updateTimerUI();
-                        stopTimer();
-                        waktuHabis();
-                        return;
-                    }
-                    updateTimerUI();
-                }, 1000);
-            }
-
-            function waktuHabis() {
-                if (state.soalLocked) return;
-                state.soalLocked = true;
-
-                catatHasil('salah');
-
-                const inputEl = document.querySelector('#jawaban');
-                if (inputEl) inputEl.disabled = true;
-                document.querySelectorAll('.pilihan-jawab button')
-                    .forEach(b => b.disabled = true);
-
-                feedbackEl.textContent = '⏱ Waktu habis! Jawaban: ' + state.jawabanBenar;
-                feedbackEl.className = 'feedback salah';
-
-                setTimeout(() => {
-                    if (state.screen === 'berjalan') nextButton.click();
-                }, 1200);
-            }
-
-            // ===== RENDER =====
-            function render() {
-                mulai.style.display = state.screen === 'mulai' ? 'block' : 'none';
-                berjalan.style.display = state.screen === 'berjalan' ? 'block' : 'none';
-                selesai.style.display = state.screen === 'selesai' ? 'block' : 'none';
-
-                if (state.screen !== 'berjalan') {
-                    stopTimer();
-                    if (state.screen === 'selesai') {
-                        totalBenarEl.textContent = state.totalBenar;
-                        totalSalahEl.textContent = state.totalSalah;
-                    }
-                    return;
-                }
-
-                const s = state.soal[state.index];
-                if (!s) {
-                    soalEl.textContent = 'Soal tidak ditemukan';
-                    stopTimer();
-                    return;
-                }
-
-                feedbackEl.textContent = '';
-                feedbackEl.className = 'feedback';
-
-                if (state.tipeSoal === 1) tipeSoal1(s);
-                else if (state.tipeSoal === 2) tipeSoal2(s);
-                else if (state.tipeSoal === 3) tipeSoal3(s);
-                else if (state.tipeSoal === 4) tipeSoal4(s);
-                else soalEl.textContent = 'Tipe soal tidak dikenal';
-
-                renderProgress();
-                startTimer();
-
-                const inputEl = document.querySelector('#jawaban');
-                if (inputEl) inputEl.focus();
-            }
-
-            // ===== SOAL =====
-            function loadSoal() {
-                const levelData = DataSoal[state.level];
-                state.soal = levelData ? fisherYatesShuffle([...levelData.soal]) : [];
-                state.tipeSoal = levelData ? levelData.tipeSoal : 1;
-
-                // reset progress & skor tiap mulai level baru
-                state.hasil = new Array(state.soal.length).fill(null);
-                state.totalBenar = 0;
-                state.totalSalah = 0;
-            }
-
-            function tipeSoal4(arr) {
-                visualisasiEl.innerHTML = '';
-                soalEl.innerHTML = '';
-                soalEl.innerHTML = `${arr[0]} - ${arr[1]} = <input type="number" id="jawaban" inputmode="numeric">`;
-                state.jawabanBenar = arr[0] - arr[1];
-                const div=document.createElement('div');
-                div.classList.add('bantuan');
-                for (let i = 0; i < 10; i++) {
-                    const b = document.createElement('div');
-                    b.classList.add(i < arr[0] ? 'blue1' : 'red1');
-                    b.textContent = i+1;                    
-                    b.dataset.nilai = i;
-                    div.appendChild(b);
-                }
-                visualisasiEl.appendChild(div);
-            }
-
-            function tipeSoal1(arr) {
-                soalEl.innerHTML = '';
-                state.jawabanBenar = arr[0];
-
-                const grid = document.createElement('div');
-                grid.classList.add('tengrid');
-                for (let i = 0; i < 10; i++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add(i < arr[0] ? 'blue' : 'red');
-                    grid.appendChild(cell);
-                }
-
-                const pilihan = document.createElement('div');
-                pilihan.classList.add('pilihan-jawab');
-                for (let i = 1; i <= 10; i++) {
-                    const b = document.createElement('button');
-                    b.type = 'button';
-                    b.textContent = i;
-                    b.dataset.nilai = i;
-                    pilihan.appendChild(b);
-                }
-
-                soalEl.appendChild(grid);
-                soalEl.appendChild(pilihan);
-            }
-
-            function tipeSoal2(arr) {
-                soalEl.innerHTML = '';
-                soalEl.innerHTML = `${arr[0]} + <input type="number" id="jawaban" inputmode="numeric"> = 10`;
-                state.jawabanBenar = 10 - arr[0];
-            }
-
-            function tipeSoal3(arr) {
-                soalEl.innerHTML = '';
-                soalEl.innerHTML = `${arr[0]} + ${arr[1]} = <input type="number" id="jawaban" inputmode="numeric">`;
-                state.jawabanBenar = arr[0] + arr[1];
-            }
-
-            function fisherYatesShuffle(array) {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-                return array;
-            }
-
-            // ===== CEK =====
-            function showFeedback(pesan, benar) {
-                feedbackEl.textContent = pesan;
-                feedbackEl.className = 'feedback ' + (benar ? 'benar' : 'salah');
-            }
-
-            function cekJawaban() {
-                if (state.soalLocked) return;
-
-                const inputEl = document.querySelector('#jawaban');
-                if (!inputEl || inputEl.disabled) return;
-
-                const val = inputEl.value.trim();
-                if (val === '') return;
-
-                const jawabanUser = parseInt(val, 10);
-                if (Number.isNaN(jawabanUser)) return;
-
-                if (jawabanUser === state.jawabanBenar) {
-                    state.soalLocked = true;
-                    stopTimer();
-                    catatHasil('benar');
-                    showFeedback('Jawaban benar! ✅', true);
-                    inputEl.value = '';
-                    inputEl.disabled = true;
-                    setTimeout(() => nextButton.click(), 500);
-                } else {
-                    showFeedback('Salah, coba lagi.', false);
-                    inputEl.value = '';
-                    inputEl.focus();
-                }
-            }
-
-            function cekPilihanTipe1(btn) {
-                if (state.soalLocked) return;
-
-                const pilih = parseInt(btn.dataset.nilai, 10);
-                if (pilih === state.jawabanBenar) {
-                    state.soalLocked = true;
-                    stopTimer();
-                    catatHasil('benar');
-                    btn.classList.add('correct');
-                    showFeedback('Jawaban benar! ✅', true);
-                    document.querySelectorAll('.pilihan-jawab button')
-                        .forEach(b => b.disabled = true);
-                    setTimeout(() => nextButton.click(), 600);
-                } else {
-                    btn.classList.add('wrong');
-                    btn.disabled = true;
-                    showFeedback('Salah, coba lagi. ', false);
-                }
-            }
-
-            // ===== EVENT =====
-            function bindEvents() {
-                mulai.addEventListener('click', (e) => {
-                    const menu = e.target.closest('.sub-menu');
-                    if (!menu) return;
-
-                    state.level = parseInt(menu.dataset.level);
-                    state.index = 0;
-                    loadSoal();
-                    setState(
-                        { screen: 'berjalan', level: state.level, index: state.index },
-                        { replace: false }
-                    );
-                });
-
-                cekButton.addEventListener('click', cekJawaban);
-
-                nextButton.addEventListener('click', () => {
-                    stopTimer();
-
-                    // kalau user klik Next tanpa jawab, tandai salah
-                    if (state.hasil[state.index] === null) {
-                        catatHasil('salah');
-                    }
-
-                    if (state.index + 1 < state.soal.length) {
-                        setState({ index: state.index + 1 });
-                    } else {
-                        setState({ screen: 'selesai' });
-                    }
-                });
-
-                berjalan.addEventListener('keydown', (e) => {
-                    if (e.target.matches('#jawaban') && e.key === 'Enter') {
-                        e.preventDefault();
-                        cekButton.click();
-                    }
-                });
-
-                soalEl.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.pilihan-jawab button');
-                    if (!btn || btn.disabled) return;
-                    cekPilihanTipe1(btn);
-                });
-                visualisasiEl.addEventListener('click', (e) => {
-                    const kurangi = e.target.closest('.blue1');
-                    if (!kurangi) return;
-                    kurangi.classList.toggle('transparan');
-                });
-
-                backToMenuButton.forEach(b=>{
-                    b.addEventListener('click', () => {
-                        visualisasiEl.innerHTML=""
-                    stopTimer();
-                    setState({ screen: 'mulai', level: 0, index: 0 }, { replace: false });
-                })
-                });
-
-                window.addEventListener('popstate', () => {
-                    stopTimer();
-                    syncStateFromURL();
-                    if (state.screen === 'berjalan' && state.soal.length === 0) loadSoal();
-                    render();
-                });
-            }
-
-            // ===== INIT =====
-            function init() {
-                syncStateFromURL();
-                if (state.screen === 'berjalan') loadSoal();
-                visualisasiEl.innerHTML=""
-                bindEvents();
-                render();
-            }
-
-            init();
-        })();
-    </script>
+            state.durasi=document.querySelector("#durasiset").value
+            console.log(state.mode)
+            dialog.close();
+        }
+  
+</script>
 </body>
-
 </html>
